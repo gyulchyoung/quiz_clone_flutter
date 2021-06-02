@@ -2,8 +2,11 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:quiz_clone/model/api_adapter.dart';
 import 'package:quiz_clone/model/model_quiz.dart';
 import 'package:quiz_clone/screen/screen_quiz.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class HomeScreen extends StatefulWidget{
   @override
@@ -11,24 +14,43 @@ class HomeScreen extends StatefulWidget{
 }
 
 class _HomeScreenState extends State<HomeScreen>{
+  List<Quiz> quizs=[];
+  bool isLoading = false;
 
-  List<Quiz> quizs=[
-    Quiz.fromMap({
-      'title': 'test',
-      'candidates': ['a','b','c','d'],
-      'answer': 0
-    }),
-    Quiz.fromMap({
-      'title': 'test',
-      'candidates': ['a','b','c','d'],
-      'answer': 0
-    }),
-    Quiz.fromMap({
-      'title': 'test',
-      'candidates': ['a','b','c','d'],
-      'answer': 0
-    }),
-  ];
+  _fetchQuizs() async {
+    setState(() {
+      isLoading = true;
+    });
+    final response = 
+        await http.get(Uri.parse('https://clone-quiz-test.herokuapp.com/quiz/3/'));
+    if(response.statusCode==200){
+      setState(() {
+        quizs=parseQuizs(utf8.decode(response.bodyBytes));
+        isLoading=false;
+      });
+    }
+    else{
+      throw Exception('failed to load data');
+    }
+
+  }
+  // List<Quiz> quizs=[
+  //   Quiz.fromMap({
+  //     'title': 'test',
+  //     'candidates': ['a','b','c','d'],
+  //     'answer': 0
+  //   }),
+  //   Quiz.fromMap({
+  //     'title': 'test',
+  //     'candidates': ['a','b','c','d'],
+  //     'answer': 0
+  //   }),
+  //   Quiz.fromMap({
+  //     'title': 'test',
+  //     'candidates': ['a','b','c','d'],
+  //     'answer': 0
+  //   }),
+  // ];
 
   @override
   Widget build(BuildContext context) {
@@ -88,14 +110,16 @@ class _HomeScreenState extends State<HomeScreen>{
                         ),
                         color: Colors.deepPurple,
                         onPressed: () {
-                          Navigator.push(
+                          _fetchQuizs().whenComplete((){
+                            return Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context)=>QuizScreen(
                                   quizs: quizs,
                                 ),
                               ),
-                          );
+                            );
+                          });
                         },
                       ),
                     ),
